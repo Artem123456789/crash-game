@@ -8,19 +8,19 @@ window.onload = function(){
     }
 
     class GraphicLine{
-        constructor(firstCoord, endCoord){
-            this.firstCoord = new Point();
-            this.endCoord = new Point();
-            this.firstCoord.x = firstCoord.x;
-            this.firstCoord.y = firstCoord.y;
+        constructor(curveCoord, curveEndCoord){
+            this.curveCoord = new Point();
+            this.curveEndCoord = new Point();
+            this.curveCoord.x = curveCoord.x;
+            this.curveCoord.y = curveCoord.y;
 
-            this.endCoord.x = endCoord.x;
-            this.endCoord.y = endCoord.y;
+            this.curveEndCoord.x = curveEndCoord.x;
+            this.curveEndCoord.y = curveEndCoord.y;
         }
 
         draw(ctx){
-            ctx.quadraticCurveTo(this.firstCoord.x, this.firstCoord.y,
-                this.endCoord.x, this.endCoord.y);
+            ctx.quadraticCurveTo(this.curveCoord.x, this.curveCoord.y,
+                this.curveEndCoord.x, this.curveEndCoord.y);
             ctx.stroke();
         }
     }
@@ -31,74 +31,77 @@ window.onload = function(){
     const CANV_HEIGHT = canv.height;
     const CANV_X_CENTER = CANV_WIDTH / 2;
     const CANV_Y_CENTER = CANV_HEIGHT / 2;
-    const START_LINE_COORD = new Point(0, CANV_HEIGHT);
-    let curvePoint = new Point(START_LINE_COORD.x, START_LINE_COORD.y);
-    let curveEndPoint = new Point(START_LINE_COORD.x, START_LINE_COORD.y);
-    let graphicLine = new GraphicLine(curvePoint, curveEndPoint);
-    let xCoordInt;
-    let yCoordInt;
-    let curveAngleInt;
-    ctx.lineWidth = 3.5;
-    ctx.lineCap = "round";
+
+    const COUNT_MILLISECONDS_SECOND = 1000;
+
+    const COEF_RICING_SPEED_SECOND = 0.35;
+    const MILLISECONDS_ANIMATION_UPDATE_FREQ = 10;
+
+    const DISTANCE_BETWEEN_SECONDS = 10;
+    const DISTANCE_BETWEEN_POINTS = 6;
+    const SECOND_DIFF = CANV_WIDTH / DISTANCE_BETWEEN_SECONDS;
+    const POINTS_DIFF = CANV_HEIGHT / DISTANCE_BETWEEN_POINTS;
+    const PIXELS_RICING_SPEED_POINTS = COEF_RICING_SPEED_SECOND * POINTS_DIFF;
+
+    const START_GRAPHIC_LINE_COORD = new Point(SECOND_DIFF, CANV_HEIGHT - POINTS_DIFF);
+    const FIVE_SECONDS_COORD = new Point((CANV_WIDTH + START_GRAPHIC_LINE_COORD.x) / 2, START_GRAPHIC_LINE_COORD.y);
+
+    const START_LINE_WIDTH = 3.5;
+    const START_LINE_CAP = "round";
+    const BACKGROUND_COLOR = "black";
+    const TEXT_LINE_COLOR = "yellow";
+
+    let graphicLine = new GraphicLine(START_GRAPHIC_LINE_COORD, START_GRAPHIC_LINE_COORD);
+    
+    makeDefaultStyle();
+    drawBackground();
+
+    let graphicInt;
     drawAnimation();
 
     function drawAnimation(){
-        xCoordInt = setInterval(increaseGraphicXCoord, 10);
-        yCoordInt = setInterval(increaseGraphicYCoord, 10);
-        setTimeout(function(){
-            curveAngleInt = setInterval(changeCurveAngleAfter, 10);
-        }, 10000);
-    }
+        for (let index = 1; index < DISTANCE_BETWEEN_SECONDS + 1; index++) {
+            ctx.beginPath();
+            ctx.lineTo(START_GRAPHIC_LINE_COORD.x * index, START_GRAPHIC_LINE_COORD.y);
+            ctx.stroke();   
+        }
 
-    function beginAnimation(){
-        clearCanvas(ctx);
         ctx.beginPath();
-        ctx.moveTo(START_LINE_COORD.x, START_LINE_COORD.y);
-    }
-
-    function increaseGraphicXCoord(){
-        beginAnimation();
-        drawSecondsText();
-        graphicLine.endCoord.x += 0.5;
-        graphicLine.draw(ctx);
+        console.log((CANV_HEIGHT - START_GRAPHIC_LINE_COORD.y) * 2);
+        ctx.lineTo(START_GRAPHIC_LINE_COORD.x, (CANV_HEIGHT) - START_GRAPHIC_LINE_COORD.y * 2);
         ctx.stroke();
-        changeCurveAngle();
-        if(graphicLine.endCoord.x >= CANV_WIDTH - 10) clearInterval(xCoordInt);
+
+        // for (let index = 1; index < DISTANCE_BETWEEN_POINTS + 1; index++) {
+        //     ctx.beginPath();
+        //     ctx.lineTo(START_GRAPHIC_LINE_COORD.x, (CANV_HEIGHT) - START_GRAPHIC_LINE_COORD.y * index);
+        //     ctx.stroke();   
+        // }
+
+        // graphicInt = setInterval(drawGraphic, MILLISECONDS_ANIMATION_UPDATE_FREQ);
     }
 
-    function increaseGraphicYCoord(){
-        beginAnimation();
-        drawSecondsText();
-        graphicLine.endCoord.y -= 0.25;
+    function drawGraphic(){
+        clearCanvas();
+        graphicLine.curveEndCoord.x += MILLISECONDS_ANIMATION_UPDATE_FREQ * (SECOND_DIFF - (SECOND_DIFF / DISTANCE_BETWEEN_SECONDS)) / COUNT_MILLISECONDS_SECOND;
+        // graphicLine.curveEndCoord.y -= PIXELS_RICING_SPEED_POINTS;
+        if(graphicLine.curveEndCoord.x >= CANV_WIDTH - 5) clearInterval(graphicInt);
+        drawBackground();
         graphicLine.draw(ctx);
-        ctx.stroke();
-        if(graphicLine.endCoord.y <= 30) clearInterval(yCoordInt);
+    }
+    
+    function makeDefaultStyle(){
+        ctx.lineWidth = START_LINE_WIDTH;
+        ctx.lineCap = START_LINE_CAP;
+        ctx.strokeStyle = TEXT_LINE_COLOR;
     }
 
-    function changeCurveAngle(){
-        graphicLine.firstCoord.x += 0.3;
-        graphicLine.firstCoord.y -= 0.01;
+    function drawBackground(){
+        ctx.fillStyle = BACKGROUND_COLOR;
+        ctx.fillRect(0, 0, CANV_WIDTH, CANV_HEIGHT);
     }
 
-    function changeCurveAngleAfter(){
-        beginAnimation();
-        drawSecondsText();
-        graphicLine.firstCoord.x += 0.1;
-        graphicLine.firstCoord.y += 0.01;
-        graphicLine.draw(ctx);
-        ctx.stroke();
-        if(graphicLine.firstCoord.x >= CANV_WIDTH - 10) clearInterval(curveAngleInt);
-    }
-
-    function clearCanvas(ctx){
+    function clearCanvas(){
         ctx.clearRect(0, 0, CANV_WIDTH, CANV_HEIGHT);
-    }
-
-    function drawSecondsText(){
-        ctx.font = "17px Arial";
-        ctx.fillText("0s", 5, 20);
-        ctx.fillText("5s", CANV_X_CENTER, 20);
-        ctx.fillText("10s", CANV_WIDTH - 30, 20);
     }
 
 }
